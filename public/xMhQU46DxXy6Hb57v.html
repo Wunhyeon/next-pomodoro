@@ -1,0 +1,148 @@
+<html><head><base href="https://example.com/">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pomodoro Timer Widget</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+function PomodoroTimer() {
+  const [time, setTime] = useState(1500); // 25 minutes in seconds
+  const [isActive, setIsActive] = useState(false);
+  const [topic, setTopic] = useState('PS');
+  const [showTopicMenu, setShowTopicMenu] = useState(false);
+
+  useEffect(() => {
+    let interval = null;
+    if (isActive && time > 0) {
+      interval = setInterval(() => {
+        setTime((time) => time - 1);
+      }, 1000);
+    } else if (time === 0) {
+      setIsActive(false);
+    }
+    return () => clearInterval(interval);
+  }, [isActive, time]);
+
+  const toggleTimer = () => {
+    setIsActive(!isActive);
+  };
+
+  const resetTimer = () => {
+    setTime(1500);
+    setIsActive(false);
+  };
+
+  const formatTime = (time) => {
+    const minutes = Math.floor(time / 60);
+    const seconds = time % 60;
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  const progress = ((1500 - time) / 1500) * 100;
+
+  return (
+    <div className="bg-white rounded-lg shadow-lg p-6 w-64">
+      <div className="relative mb-4">
+        <div className="w-full h-48 bg-gray-200 rounded-full overflow-hidden">
+          <svg className="w-full h-full" viewBox="0 0 100 100">
+            <circle
+              cx="50"
+              cy="50"
+              r="45"
+              fill="none"
+              stroke="#E5E7EB"
+              strokeWidth="10"
+            />
+            <circle
+              cx="50"
+              cy="50"
+              r="45"
+              fill="none"
+              stroke="#F87171"
+              strokeWidth="10"
+              strokeDasharray={`${progress} 283`}
+              transform="rotate(-90 50 50)"
+            />
+          </svg>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-4xl font-bold text-gray-700">{formatTime(time)}</span>
+          </div>
+        </div>
+      </div>
+      <div className="flex justify-center mb-4">
+        <button
+          onClick={toggleTimer}
+          className="bg-red-500 text-white rounded-full w-12 h-12 flex items-center justify-center focus:outline-none"
+        >
+          {isActive ? (
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          )}
+        </button>
+      </div>
+      <div className="relative">
+        <button
+          onClick={() => setShowTopicMenu(!showTopicMenu)}
+          className="w-full py-2 px-4 bg-gray-100 text-left rounded focus:outline-none"
+        >
+          {topic}
+        </button>
+        {showTopicMenu && (
+          <div className="absolute w-full mt-1 bg-white border rounded shadow-lg">
+            <button
+              onClick={() => { setTopic('PS'); setShowTopicMenu(false); }}
+              className="w-full py-2 px-4 text-left hover:bg-gray-100"
+            >
+              PS
+            </button>
+            <button
+              onClick={() => { setTopic('Other'); setShowTopicMenu(false); }}
+              className="w-full py-2 px-4 text-left hover:bg-gray-100"
+            >
+              Other
+            </button>
+            <div className="p-2">
+              <input
+                type="text"
+                placeholder="Add Task"
+                className="w-full p-2 border rounded"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    setTopic(e.target.value);
+                    setShowTopicMenu(false);
+                  }
+                }}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+      <div className="mt-4 flex justify-between items-center text-sm text-gray-500">
+        <span>Today 0/10</span>
+        <button onClick={resetTimer} className="focus:outline-none">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.render(<PomodoroTimer />, document.getElementById('root'));
+</script>
+</body></html>

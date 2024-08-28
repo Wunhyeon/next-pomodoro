@@ -1,0 +1,190 @@
+<html>
+
+<head>
+  <base href="https://cdn.tailwindcss.com/">
+  <link href="https://cdn.tailwindcss.com/" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+</head>
+
+<body>
+  <div id="root" class="w-full h-screen flex items-center justify-center bg-gray-100"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    function PomodoroTimer() {
+      const [time, setTime] = useState(1500); // 25 minutes in seconds
+      const [isActive, setIsActive] = useState(false);
+      const [topic, setTopic] = useState('PS');
+      const [showTopicMenu, setShowTopicMenu] = useState(false);
+      const [showSettings, setShowSettings] = useState(false);
+      const [customTopic, setCustomTopic] = useState('');
+      const [tasks, setTasks] = useState([]);
+
+      const timerRef = useRef(null);
+
+      useEffect(() => {
+        if (isActive && time > 0) {
+          timerRef.current = setInterval(() => {
+            setTime((time) => time - 1);
+          }, 1000);
+        } else if (time === 0) {
+          clearInterval(timerRef.current);
+          setIsActive(false);
+        }
+        return () => clearInterval(timerRef.current);
+      }, [isActive, time]);
+
+      const toggleTimer = () => setIsActive(!isActive);
+
+      const resetTimer = () => {
+        setIsActive(false);
+        setTime(1500);
+      };
+
+      const formatTime = (time) => {
+        const minutes = Math.floor(time / 60);
+        const seconds = time % 60;
+        return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      };
+
+      const handleTopicChange = (newTopic) => {
+        setTopic(newTopic);
+        setShowTopicMenu(false);
+      };
+
+      const handleCustomTopicSubmit = (e) => {
+        e.preventDefault();
+        if (customTopic.trim()) {
+          handleTopicChange(customTopic.trim());
+          setCustomTopic('');
+        }
+      };
+
+      const addTask = (task) => {
+        setTasks([...tasks, task]);
+      };
+
+      return (
+        <div className="bg-white rounded-lg shadow-lg p-6 w-80">
+          <div className="relative mb-4">
+            <button
+              onClick={() => setShowTopicMenu(!showTopicMenu)}
+              className="w-full text-left px-4 py-2 bg-gray-100 rounded-md focus:outline-none"
+            >
+              {topic}
+            </button>
+            {showTopicMenu && (
+              <div className="absolute top-full left-0 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-10">
+                <button onClick={() => handleTopicChange('PS')} className="block w-full text-left px-4 py-2 hover:bg-gray-100">PS</button>
+                <button onClick={() => handleTopicChange('Other')} className="block w-full text-left px-4 py-2 hover:bg-gray-100">Other</button>
+                <form onSubmit={handleCustomTopicSubmit} className="p-2">
+                  <input
+                    type="text"
+                    value={customTopic}
+                    onChange={(e) => setCustomTopic(e.target.value)}
+                    placeholder="Add custom topic"
+                    className="w-full px-2 py-1 border rounded"
+                  />
+                </form>
+              </div>
+            )}
+          </div>
+
+          <div className="relative w-64 h-64 mx-auto mb-4">
+            <svg className="w-full h-full" viewBox="0 0 100 100">
+              <circle
+                className="text-gray-200 stroke-current"
+                strokeWidth="4"
+                cx="50"
+                cy="50"
+                r="45"
+                fill="transparent"
+              ></circle>
+              <circle
+                className="text-blue-500 stroke-current"
+                strokeWidth="4"
+                strokeLinecap="round"
+                cx="50"
+                cy="50"
+                r="45"
+                fill="transparent"
+                strokeDasharray="283"
+                strokeDashoffset={283 - (283 * time) / 1500}
+              ></circle>
+            </svg>
+            <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center">
+              <span className="text-4xl font-bold">{formatTime(time)}</span>
+            </div>
+          </div>
+
+          <div className="flex justify-center space-x-4 mb-4">
+            <button
+              onClick={toggleTimer}
+              className={`px-4 py-2 rounded-full ${isActive ? 'bg-red-500 text-white' : 'bg-green-500 text-white'
+                }`}
+            >
+              {isActive ? 'Pause' : 'Start'}
+            </button>
+            <button
+              onClick={resetTimer}
+              className="px-4 py-2 bg-gray-300 rounded-full"
+            >
+              Reset
+            </button>
+          </div>
+
+          <div className="flex justify-between items-center">
+            <div>Today {tasks.length}/10</div>
+            <button
+              onClick={() => setShowSettings(!showSettings)}
+              className="text-blue-500"
+            >
+              ⚙️
+            </button>
+          </div>
+
+          {showSettings && (
+            <div className="mt-4">
+              <h3 className="font-bold mb-2">Settings</h3>
+              <div className="flex items-center mb-2">
+                <label className="mr-2">Timer (minutes):</label>
+                <input
+                  type="number"
+                  value={Math.floor(time / 60)}
+                  onChange={(e) => setTime(e.target.value * 60)}
+                  className="w-16 px-2 py-1 border rounded"
+                />
+              </div>
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                const task = e.target.elements.task.value;
+                if (task.trim()) {
+                  addTask(task.trim());
+                  e.target.reset();
+                }
+              }}>
+                <input
+                  name="task"
+                  type="text"
+                  placeholder="Add a new task"
+                  className="w-full px-2 py-1 border rounded mb-2"
+                />
+                <button type="submit" className="w-full bg-blue-500 text-white py-2 rounded">
+                  Add Task
+                </button>
+              </form>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.render(<PomodoroTimer />, document.getElementById('root'));
+  </script>
+</body>
+
+</html>
